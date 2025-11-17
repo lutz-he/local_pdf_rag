@@ -1,0 +1,59 @@
+from langchain_chroma import Chroma
+from langchain_core.prompts import ChatPromptTemplate
+
+from src.utils import Models, CHROMA_PATH, DATA_PATH
+
+# Init models
+models = Models()
+embeddings = models.embeddings_ollama  
+llm = models.model_ollama
+
+# Prompt Template
+PROMPT_TEMPLATE = """
+Answer the question based only on the following context:
+
+{context}
+
+---
+
+Answer the question based on the above context: {question}
+"""
+
+def query_rag(query_text: str, top_k: int = 5, similarity_threshold: float = 0.25) -> str:
+    db = Chroma(
+        collection_name="documents",
+        persist_directory=CHROMA_PATH,
+        embedding_function=embeddings,
+        )
+
+    # Search the DB.
+    retriever = db.as_retriever(search_type="similarity_score_threshold", search_kwargs={"k": top_k, "score_threshold": similarity_threshold})
+    results = retriever.invoke(query_text)
+
+    # If no results, lower the threshold until we get some results.
+    new_threshold = similarity_threshold
+    if len(results) == 0:
+        while len(results) == 0 and new_threshold > 0:
+            new_threshold -= 0.1
+            retriever = db.as_retriever(search_type="similarity_score_threshold", search_kwargs={"k": top_k, "score_threshold": new_threshold})
+            results = retriever.invoke(query_text)
+    if len(results) == 0:
+        print("No results found. Please try a different query.")
+        return "No results found."
+
+    context_text = "\n\n---\n\n".join([doc.page_content for doc in results])
+    prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+    prompt = prompt_template.format(context=context_text, question=query_text)
+
+    response_text = llm.invoke(prompt)
+
+    sources = [doc.metadata.get("id", None) for doc in results]
+    sources = [src.replace(DATA_PATH, "") for src in sources if src is not None]
+    sources = [src.replace("\\", "") for src in sources if src is not None]
+
+    print(f"Response: {response_text}")
+    print("Sources:")
+    for i, src in enumerate(sources):
+        print(f"- [{i+1}] {src}")
+
+    return response_text

@@ -13,7 +13,7 @@ class Models():
 
         # select ollama model for QA task and response generation
         self.model_ollama = OllamaLLM(
-            model="hf.co/bartowski/gemma-2-9b-it-abliterated-GGUF:Q4_K_S",
+            model="hf.co/bartowski/mlabonne_Qwen3-4B-abliterated-GGUF:Q6_K",
             # model="llama3.2",
             temperature=0.1,
         )

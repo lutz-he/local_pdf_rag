@@ -1,3 +1,4 @@
+import re
 from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -8,6 +9,13 @@ models = Models()
 embeddings = models.embeddings_ollama  
 llm = models.model_ollama
 
+def remove_thinking(response: str) -> str:
+    """Remove any 'thinking' steps from the model response."""
+    start_pattern = "<think>"
+    end_pattern = "</think>"
+    excl = re.compile(f"{start_pattern}.*?{end_pattern}", re.DOTALL)
+    return excl.sub("", response)
+
 # Prompt Template
 PROMPT_TEMPLATE = """
 Answer the question based only on the following context:
@@ -17,6 +25,9 @@ Answer the question based only on the following context:
 ---
 
 Answer the question based on the above context: {question}
+
+Don't include any thinking steps or additional information not contained in the context.
+Just respond with the answer. If you don't know the answer, just say "I don't know".
 """
 
 def query_rag(query_text: str, top_k: int = 5, similarity_threshold: float = 0.25) -> str:
@@ -46,14 +57,18 @@ def query_rag(query_text: str, top_k: int = 5, similarity_threshold: float = 0.2
     prompt = prompt_template.format(context=context_text, question=query_text)
 
     response_text = llm.invoke(prompt)
+    response_text = remove_thinking(response_text)
 
     sources = [doc.metadata.get("id", None) for doc in results]
+
+    return response_text, sources, results
+
+def print_output(response_text: str, sources: list[str], DATA_PATH="") -> None:
+    print(f"Response: {response_text}")
+
     sources = [src.replace(DATA_PATH, "") for src in sources if src is not None]
     sources = [src.replace("\\", "") for src in sources if src is not None]
 
-    print(f"Response: {response_text}")
     print("Sources:")
     for i, src in enumerate(sources):
         print(f"- [{i+1}] {src}")
-
-    return response_text

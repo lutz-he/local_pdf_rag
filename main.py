@@ -1,6 +1,6 @@
 
 import argparse
-from src.query_rag import query_rag
+from src.query_rag import query_rag, print_output
 
 def main():
     parser = argparse.ArgumentParser(description="PDF Q&A with RAG")
@@ -19,7 +19,8 @@ def main():
         user_input = input("Question: ")
         if user_input.lower() == 'q':
             break
-        query_rag(user_input, top_k=top_k, similarity_threshold=similarity_threshold)
+        response_text, sources, results = query_rag(user_input, top_k=top_k, similarity_threshold=similarity_threshold)
+        print_output(response_text, sources, DATA_PATH="src/data/")
         print("-" * 30)
 
 if __name__ == "__main__":

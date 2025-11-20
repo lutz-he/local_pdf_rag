@@ -48,11 +48,9 @@ Enter your question when prompted. The system will retrieve relevant document ch
 
 ## Ideas
 
-* Build interface
-    * drag/drop pdfs
-    * DB ingest
-    * Q&A
+* Interface: add file browser and db_ingest
 * Testing & Eval
+* Include Metadata
 
 
 ---

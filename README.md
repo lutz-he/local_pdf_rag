@@ -30,13 +30,20 @@ python src/db_ingest.py
 ```
 This will process all PDFs in `data/` and store their embeddings in ChromaDB. Use `--clean` to clean the database before ingestion.
 
-### 2. Query the RAG system
+### 2. Query
 
+#### 2.1 CLI
 Run the main script and follow the prompts:
 ```bash
 python main.py
 ```
 Enter your question when prompted. The system will retrieve relevant document chunks and generate an answer using the local LLM via Ollama.
+
+#### Streamlit App
+Run the app:
+```bash
+streamlit run app.py
+```
 
 ## Notes
 - Ensure Ollama is running before querying.
